@@ -31,6 +31,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         self.sceneView.delegate = self
         self.setUpAccelerometer()
         self.sceneView.showsStatistics = true
+        
+        let value = UIInterfaceOrientation.landscapeLeft.rawValue
+        UIDevice.current.setValue(value, forKey: "orientation")
+        
         // Do any additional setup after loading the view.
     }
     
@@ -173,6 +177,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         request.httpMethod = "POST"
         request.httpBody = Data(query!.utf8)
         let session = URLSession.shared
+        var testResponse:String = ""
         let task = session.dataTask(with: request as URLRequest, completionHandler: { data, response, error in
             guard error == nil else {
                 return
@@ -183,15 +188,22 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             do {
                 //create json object from data
                 if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
-                    print(json)
-                    // handle json...
+                    guard let test = json["response"] as? String else { return }
+                    testResponse = test
+                    print(testResponse)
                 }
             } catch let error {
                 print(error.localizedDescription)
             }
         })
         task.resume()
+        
+        let alert = UIAlertController(title: "Response", message: "Data sent.", preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
+        
         self.sendValues = [["x": CGFloat(0), "y":CGFloat(0)]];
+        self.sceneView.scene.rootNode.childNodes.filter({$0.name == "chassis"}).forEach({$0.removeFromParentNode()})
     }
     
     func json(from object:Any) -> String? {
@@ -201,7 +213,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         return String(data: data, encoding: String.Encoding.utf8)
     }
     
-    
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscapeRight
+    }
+
+    override var shouldAutorotate: Bool {
+        return true
+    }
 }
 
 extension Int{
