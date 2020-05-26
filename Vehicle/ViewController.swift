@@ -19,6 +19,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     var orientation:CGFloat = 0
     var touched:Int = 0
     var accelerationValues = [UIAccelerationValue(0), UIAccelerationValue(0)]
+    var sendValues:[[String:CGFloat]] = [["x": CGFloat(0), "y":CGFloat(0)]]
     var time:Int = 0
     
     
@@ -93,10 +94,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         self.sceneView.scene.rootNode.addChildNode(chassis)
     }
     
-    func sendData() {
-        
-    }
-    
     func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
 //        print("simulating physics")
         var engineForces:CGFloat = 0
@@ -118,8 +115,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         self.vehicle.applyBrakingForce(brakingForce, forWheelAt: 0)
         self.vehicle.applyBrakingForce(brakingForce, forWheelAt: 1)
         self.time+=1;
-        if(self.time == 60){
+        if(self.time == 20){
             self.time = 0;
+            self.sendValues.append(["x":CGFloat(accelerationValues[0]), "y":CGFloat(accelerationValues[1])])
 //            print("x:" + String(accelerationValues[0]) + " y:" + String(accelerationValues[1]));
         }
         
@@ -168,8 +166,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let url = URL(string: "http://192.168.1.234:8888/poit/index.php")!
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
-            URLQueryItem(name: "id", value: "test"),
-            URLQueryItem(name: "key2", value: "1")
+            URLQueryItem(name: "data", value: json(from: self.sendValues)),
         ]
         let query = components.url!.query
         var request = URLRequest(url: url)
@@ -194,9 +191,15 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             }
         })
         task.resume()
+        self.sendValues = [["x": CGFloat(0), "y":CGFloat(0)]];
     }
     
-    
+    func json(from object:Any) -> String? {
+        guard let data = try? JSONSerialization.data(withJSONObject: object, options: []) else {
+            return nil
+        }
+        return String(data: data, encoding: String.Encoding.utf8)
+    }
     
     
 }
