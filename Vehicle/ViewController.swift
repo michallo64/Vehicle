@@ -48,7 +48,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         guard let planeAnchor = anchor as? ARPlaneAnchor else{return}
         let concreteNode = createConcrete(planeAnchor: planeAnchor)
         node.addChildNode(concreteNode)
-        print ("new flat surface detected, new ARPlane anchor")
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
@@ -58,7 +57,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
         let concreteNode = createConcrete(planeAnchor: planeAnchor)
         node.addChildNode(concreteNode)
-        print("Updating floors anchor")
     }
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
         guard let planeAnchor = anchor as? ARPlaneAnchor else{return}
@@ -91,39 +89,12 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         chassis.physicsBody = body
         self.vehicle = SCNPhysicsVehicle(chassisBody: chassis.physicsBody!, wheels: [v_rearLeftWheel, v_rearRightWheel, v_frontLeftWheel, v_frontRightWheel])
         self.sceneView.scene.physicsWorld.addBehavior(self.vehicle)
+        self.sceneView.scene.rootNode.childNodes.filter({$0.name == "chassis"}).forEach({$0.removeFromParentNode()})
         self.sceneView.scene.rootNode.addChildNode(chassis)
     }
     
     func sendData() {
-        let url = URL(string: "http://192.168.1.234:8888/poit/index.php")!
-        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
-        components.queryItems = [
-            URLQueryItem(name: "id", value: "test"),
-            URLQueryItem(name: "key2", value: "1")
-        ]
-        let query = components.url!.query
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.httpBody = Data(query!.utf8)
-        let session = URLSession.shared
-        let task = session.dataTask(with: request as URLRequest, completionHandler: { data, response, error in
-            guard error == nil else {
-                return
-            }
-            guard let data = data else {
-                return
-            }
-            do {
-                //create json object from data
-                if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
-                    print(json)
-                    // handle json...
-                }
-            } catch let error {
-                print(error.localizedDescription)
-            }
-        })
-        task.resume()
+        
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didSimulatePhysicsAtTime time: TimeInterval) {
@@ -149,7 +120,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         self.time+=1;
         if(self.time == 60){
             self.time = 0;
-            print("x:" + String(accelerationValues[0]) + " y:" + String(accelerationValues[1]));
+//            print("x:" + String(accelerationValues[0]) + " y:" + String(accelerationValues[1]));
         }
         
     }
@@ -192,6 +163,42 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let kfilteringFactor = 0.5
         return UpdatedAcceleration * kfilteringFactor + previousAcceleration * (1-kfilteringFactor)
     }
+    
+    @IBAction func sendData(_ sender: UIButton) {
+        let url = URL(string: "http://192.168.1.234:8888/poit/index.php")!
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "id", value: "test"),
+            URLQueryItem(name: "key2", value: "1")
+        ]
+        let query = components.url!.query
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = Data(query!.utf8)
+        let session = URLSession.shared
+        let task = session.dataTask(with: request as URLRequest, completionHandler: { data, response, error in
+            guard error == nil else {
+                return
+            }
+            guard let data = data else {
+                return
+            }
+            do {
+                //create json object from data
+                if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
+                    print(json)
+                    // handle json...
+                }
+            } catch let error {
+                print(error.localizedDescription)
+            }
+        })
+        task.resume()
+    }
+    
+    
+    
+    
 }
 
 extension Int{
